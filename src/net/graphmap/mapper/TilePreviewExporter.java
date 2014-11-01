@@ -92,32 +92,18 @@ public class TilePreviewExporter implements ByteExporter, LongTask {
             System.out.println("No such method exception: " + e.getMessage());
         }
 
-        if (this.customDimensions != null && this.customTopLeftPosition != null) {
-            try {
-                mSetDimensions.invoke(model, this.customDimensions);
-                mSetTopLeftPosition.invoke(model, this.customTopLeftPosition);
-            } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
-                Exceptions.printStackTrace(ex);
-            }
-            //model.setDimensions(this.customDimensions);
-            //model.setTopLeftPosition(this.customTopLeftPosition);
-        } else {
-            controller.refreshPreview(workspace);
-        }
-
         Point p = model.getTopLeftPosition();
         d = model.getDimensions();
         int divisor = (int) Math.pow(2, z);
         int tileWidth = d.width / divisor;
         int tileHeight = d.height / divisor;
         int dim = Math.max(tileWidth, tileHeight);
-        //model.setDimensions(new Dimension(tileWidth, tileHeight));
-        //model.setDimensions(new Dimension(dim, dim));
-        //model.setTopLeftPosition(new Point(p.x + (x * tileWidth), p.y + (y * tileHeight)));
         
         try {
+            //mSetDimensions.invoke(model, new Dimension(tileWidth, tileHeight));
             mSetDimensions.invoke(model, new Dimension(dim, dim));
-            mSetTopLeftPosition.invoke(model, new Point(p.x + (x * tileWidth), p.y + (y * tileHeight)));
+            //mSetTopLeftPosition.invoke(model, new Point(p.x + (x * tileWidth), p.y + (y * tileHeight)));
+            mSetTopLeftPosition.invoke(model, new Point(p.x + (x * dim), p.y + (y * dim)));
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
             Exceptions.printStackTrace(ex);
         }
