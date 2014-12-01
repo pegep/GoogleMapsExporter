@@ -102,7 +102,11 @@ public class TilePreviewExporter implements ByteExporter, LongTask {
         try {
             mSetDimensions.invoke(model, new Dimension(dim, dim));
             mSetTopLeftPosition.invoke(model, new Point(p.x + (x * dim), p.y + (y * dim)));
-        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+        } catch (IllegalAccessException ex) {
+            Exceptions.printStackTrace(ex);
+        } catch (IllegalArgumentException ex) {
+            Exceptions.printStackTrace(ex);
+        } catch (InvocationTargetException ex) {
             Exceptions.printStackTrace(ex);
         }
         System.out.println("Rendering:         " + this.getFilename("tile"));
