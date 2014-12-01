@@ -80,17 +80,6 @@ public class TileExporterUI implements ExporterClassUI {
             final ExportController ec = Lookup.getDefault().lookup(ExportController.class);
             final String filePath = exporter.getDirectory();
 
-            
-//            final ExportController ec = Lookup.getDefault().lookup(ExportController.class);
-//            final String filePath = exporter.getDirectory();
-            //String[] tokens = filePath.split("\\.(?=[^\\.]+$)");
-            //String fileName = FilenameUtils.getBaseName(filePath);
-            //String fileName = tokens[0];
-            //System.out.println("filename: " + fileName);
-
-            //System.out.println("Running at " + filePath);
-            //System.out.println("Using " + fileName + " for directory");
-
             executor.execute(exporter, new Runnable() {
 
                 @Override
