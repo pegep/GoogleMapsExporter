@@ -76,11 +76,6 @@ public class TilePreviewExporter implements ByteExporter, LongTask {
 
         PreviewModel model = controller.getModel(workspace);
         
-        model.getProperties().putValue(PreviewProperty.NODE_LABEL_OUTLINE_COLOR, new DependantColor(Color.GRAY));
-        model.getProperties().putValue(PreviewProperty.NODE_LABEL_OUTLINE_SIZE, new Float(1f));
-        model.getProperties().putValue(PreviewProperty.NODE_LABEL_COLOR, new DependantOriginalColor(Color.WHITE));
-        model.getProperties().putValue(PreviewProperty.SHOW_NODE_LABELS, Boolean.TRUE);
-        
         Method mSetDimensions = null;
         Method mSetTopLeftPosition = null;
         try {
