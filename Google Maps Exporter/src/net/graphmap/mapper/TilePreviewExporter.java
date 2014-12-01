@@ -100,9 +100,7 @@ public class TilePreviewExporter implements ByteExporter, LongTask {
         int dim = Math.max(tileWidth, tileHeight);
         
         try {
-            //mSetDimensions.invoke(model, new Dimension(tileWidth, tileHeight));
             mSetDimensions.invoke(model, new Dimension(dim, dim));
-            //mSetTopLeftPosition.invoke(model, new Point(p.x + (x * tileWidth), p.y + (y * tileHeight)));
             mSetTopLeftPosition.invoke(model, new Point(p.x + (x * dim), p.y + (y * dim)));
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
             Exceptions.printStackTrace(ex);
