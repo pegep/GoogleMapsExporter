@@ -5,17 +5,11 @@ Website : http://graphmap.net
  */
 package net.graphmap.mapper;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URL;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
 import org.gephi.desktop.io.export.spi.ExporterClassUI;
 import org.gephi.io.exporter.api.ExportController;
 import org.gephi.utils.longtask.api.LongTaskErrorHandler;
@@ -140,7 +134,6 @@ public class TileExporterUI implements ExporterClassUI {
                         
                     } catch (IOException ex) {
                         ex.printStackTrace();
-                        return;
                     }
                 }
             });
