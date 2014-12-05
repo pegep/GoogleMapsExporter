@@ -73,6 +73,15 @@ public class TileExporterUI implements ExporterClassUI {
             
             final ExportController ec = Lookup.getDefault().lookup(ExportController.class);
             final String filePath = exporter.getDirectory();
+            
+            File outDir = new File(filePath);
+            if (!outDir.exists()) {
+                try {
+                    outDir.mkdir();
+                } catch (SecurityException se) {
+                    return;
+                }
+            }
 
             executor.execute(exporter, new Runnable() {
 
@@ -86,7 +95,6 @@ public class TileExporterUI implements ExporterClassUI {
                         for (int i = 0; i <= exporter.getLevels(); i++) {
                             lastTicket += ((Double) Math.pow(2, 2 * i)).intValue();
                         }
-                        ec.exportFile(new File(filePath + File.separator + exporter.getFilename("tile") + ".png"), exporter);
                         Progress.start(progressTicket, lastTicket);
                         do {
                             ec.exportFile(new File(filePath + File.separator + exporter.getFilename("tile") + ".png"), exporter);
