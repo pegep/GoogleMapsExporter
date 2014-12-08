@@ -96,10 +96,8 @@ public class TileExporterUI implements ExporterClassUI {
                             lastTicket += ((Double) Math.pow(2, 2 * i)).intValue();
                         }
                         Progress.start(progressTicket, lastTicket);
-                        do {
-                            ec.exportFile(new File(filePath + File.separator + exporter.getFilename("tile") + ".png"), exporter);
-                            Progress.progress(progressTicket);
-                        } while (!exporter.isLast());
+                        ec.exportFile(new File(filePath + File.separator + exporter.getFilename("tile") + ".png"), exporter);
+                        Progress.progress(progressTicket);
                         Progress.finish(progressTicket);
                         
                         // Save HTML

@@ -10,7 +10,9 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Point;
 import java.awt.image.BufferedImage;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
@@ -43,7 +45,6 @@ public class TilePreviewExporter implements ByteExporter, LongTask {
     private int width = 256;
     private int height = 256;
     private boolean transparentBackground = true;
-    private int margin = 0;
     private ProcessingTarget target;
     private int x = 0;
     private int y = 0;
@@ -60,21 +61,18 @@ public class TilePreviewExporter implements ByteExporter, LongTask {
         //Progress.start(progress);
         PreviewController controller = Lookup.getDefault().lookup(PreviewController.class);
         controller.getModel(workspace).getProperties().putValue(PreviewProperty.VISIBILITY_RATIO, 1.0);
+        
         PreviewProperties props = controller.getModel(workspace).getProperties();
-        props.putValue("width", width);
-        props.putValue("height", height);
         Color oldColor = props.getColorValue(PreviewProperty.BACKGROUND_COLOR);
         if (transparentBackground) {
             props.putValue(PreviewProperty.BACKGROUND_COLOR, new Color(255, 255, 255, 0));//White transparent
         }
-        
-        this.margin = 0;
-        props.putValue(PreviewProperty.MARGIN, new Float((float) margin));
+        props.putValue(PreviewProperty.MARGIN, 0f);
         props.putValue(PreviewProperty.NODE_LABEL_FONT, props.getFontValue(PreviewProperty.NODE_LABEL_FONT).deriveFont(Font.PLAIN, Math.max(1, 4 / (z + 1))));
-        controller.refreshPreview();
+        props.putValue("width", width);
+        props.putValue("height", height);
 
         PreviewModel model = controller.getModel(workspace);
-        
         Method mSetDimensions = null;
         Method mSetTopLeftPosition = null;
         try {
@@ -85,77 +83,84 @@ public class TilePreviewExporter implements ByteExporter, LongTask {
         } catch (NoSuchMethodException e) {
             System.out.println("No such method exception: " + e.getMessage());
         }
-
-        Point p = model.getTopLeftPosition();
-        d = model.getDimensions();
-        int divisor = (int) Math.pow(2, z);
-        int tileWidth = d.width / divisor;
-        int tileHeight = d.height / divisor;
-        int dim = Math.max(tileWidth, tileHeight);
         
-        try {
-            mSetDimensions.invoke(model, new Dimension(dim, dim));
-            mSetTopLeftPosition.invoke(model, new Point(p.x + (x * dim), p.y + (y * dim)));
-        } catch (IllegalAccessException ex) {
-            Exceptions.printStackTrace(ex);
-        } catch (IllegalArgumentException ex) {
-            Exceptions.printStackTrace(ex);
-        } catch (InvocationTargetException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-        System.out.println("Rendering:         " + this.getFilename("tile"));
-        if (this.verbose > 0) {
-            System.out.println("Top left position: " + model.getTopLeftPosition().x + " " + model.getTopLeftPosition().y);
-            System.out.println("Dimensions:        " + model.getDimensions().width + " " + model.getDimensions().height);
-            System.out.println("Square:           [" + model.getTopLeftPosition().x + ", " + (model.getTopLeftPosition().x + model.getDimensions().width) + "], [" + model.getTopLeftPosition().y + ", " + (model.getTopLeftPosition().y + model.getDimensions().height) + "]");
-            System.out.println("Tilewidth          " + tileWidth + " " + tileHeight);
-            System.out.println();
-        }
+        do {
+            controller.refreshPreview();            
 
-        target = (ProcessingTarget) controller.getRenderTarget(RenderTarget.PROCESSING_TARGET, workspace);
-        if (target instanceof LongTask) {
-            //((LongTask) target).setProgressTicket(progress);
-        }
+            Point p = model.getTopLeftPosition();
+            d = model.getDimensions();
+            int divisor = (int) Math.pow(2, z);
+            int tileWidth = d.width / divisor;
+            int tileHeight = d.height / divisor;
+            int dim = Math.max(tileWidth, tileHeight);
 
-        try {
-            target.getGraphics().noSmooth();
-            target.refresh();
+            try {
+                mSetDimensions.invoke(model, new Dimension(dim, dim));
+                mSetTopLeftPosition.invoke(model, new Point(p.x + (x * dim), p.y + (y * dim)));
+            } catch (IllegalAccessException ex) {
+                Exceptions.printStackTrace(ex);
+            } catch (IllegalArgumentException ex) {
+                Exceptions.printStackTrace(ex);
+            } catch (InvocationTargetException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+            
+            System.out.println("Rendering:         " + this.getFilename("tile"));
+            if (this.verbose > 0) {
+                System.out.println("Top left position: " + model.getTopLeftPosition().x + " " + model.getTopLeftPosition().y);
+                System.out.println("Dimensions:        " + model.getDimensions().width + " " + model.getDimensions().height);
+                System.out.println("Square:           [" + model.getTopLeftPosition().x + ", " + (model.getTopLeftPosition().x + model.getDimensions().width) + "], [" + model.getTopLeftPosition().y + ", " + (model.getTopLeftPosition().y + model.getDimensions().height) + "]");
+                System.out.println("Tilewidth          " + tileWidth + " " + tileHeight);
+                System.out.println();
+            }
 
-            PGraphicsJava2D pg2 = (PGraphicsJava2D) target.getGraphics();
-            BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-            img.setRGB(0, 0, width, height, pg2.pixels, 0, width);
-            ImageIO.write(img, "png", stream);
-            props.putValue(PreviewProperty.BACKGROUND_COLOR, oldColor);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+            target = (ProcessingTarget) controller.getRenderTarget(RenderTarget.PROCESSING_TARGET, workspace);
+            if (target instanceof LongTask) {
+                //((LongTask) target).setProgressTicket(progress);
+            }
 
+            try {
+                target.getGraphics().noSmooth();
+                target.refresh();
+
+                PGraphicsJava2D pg2 = (PGraphicsJava2D) target.getGraphics();
+                BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+                img.setRGB(0, 0, width, height, pg2.pixels, 0, width);
+                stream = new BufferedOutputStream(new FileOutputStream(new File(directory + File.separator + this.getFilename("tile") + ".png")));
+                ImageIO.write(img, "png", stream);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+            try {
+                stream.flush();
+                stream.close();
+            } catch (IOException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+            
+            x++;
+            if (x == Math.pow(2, z) && y != Math.pow(2, z) - 1) { // x is at eol
+                x = 0;
+                y++; // next row
+            }
+            if ((x == Math.pow(2, z) && y == Math.pow(2, z) - 1)) { // x and y at eol
+                z++;
+                x = 0;
+                y = 0;
+            }
+            if (z == 0) {
+                z++;
+                x = 0;
+                y = 0;
+            }
+        } while (!this.isLast());
         //Fix bug caused by keeping width and height in the workspace preview properties.
         //When a .gephi file is loaded later with these properties PGraphics will be created instead of a PApplet
         props.removeSimpleValue("width");
         props.removeSimpleValue("height");
         props.removeSimpleValue(PreviewProperty.MARGIN);
-        try {
-            stream.close();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-        x++;
-        if (x == Math.pow(2, z) && y != Math.pow(2, z) - 1) { // x is at eol
-            x = 0;
-            y++; // next row
-        }
-        if ((x == Math.pow(2, z) && y == Math.pow(2, z) - 1)) { // x and y at eol
-            z++;
-            x = 0;
-            y = 0;
-        }
-        if (z == 0) {
-            z++;
-            x = 0;
-            y = 0;
-        }
-
+        props.putValue(PreviewProperty.BACKGROUND_COLOR, oldColor);
         //Progress.finish(progress);
 
         return !cancel;
@@ -175,14 +180,6 @@ public class TilePreviewExporter implements ByteExporter, LongTask {
 
     public void setWidth(int width) {
         this.width = width;
-    }
-
-    public int getMargin() {
-        return margin;
-    }
-
-    public void setMargin(int margin) {
-        this.margin = margin;
     }
 
     public void setLevels(int levels) {
