@@ -88,17 +88,7 @@ public class TileExporterUI implements ExporterClassUI {
                 @Override
                 public void run() {
                     try {
-                        ProgressTicketProvider progressProvider = Lookup.getDefault().lookup(ProgressTicketProvider.class);
-                        ProgressTicket progressTicket = progressProvider.createTicket("Google Maps Exporter", null);
-                        
-                        int lastTicket = 0;
-                        for (int i = 0; i <= exporter.getLevels(); i++) {
-                            lastTicket += ((Double) Math.pow(2, 2 * i)).intValue();
-                        }
-                        Progress.start(progressTicket, lastTicket);
                         ec.exportFile(new File(filePath + File.separator + exporter.getFilename("tile") + ".png"), exporter);
-                        Progress.progress(progressTicket);
-                        Progress.finish(progressTicket);
                         
                         // Save HTML
                         InputStream sourceHtml = null;

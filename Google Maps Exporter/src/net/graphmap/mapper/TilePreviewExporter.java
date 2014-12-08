@@ -27,6 +27,7 @@ import org.gephi.preview.api.ProcessingTarget;
 import org.gephi.preview.api.RenderTarget;
 import org.gephi.project.api.Workspace;
 import org.gephi.utils.longtask.spi.LongTask;
+import org.gephi.utils.progress.Progress;
 import org.gephi.utils.progress.ProgressTicket;
 import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
@@ -41,6 +42,7 @@ public class TilePreviewExporter implements ByteExporter, LongTask {
 //    private ProgressTicket progress;
     private boolean cancel = false;
     private Workspace workspace;
+    private ProgressTicket progress;
     private OutputStream stream;
     private int width = 256;
     private int height = 256;
@@ -84,7 +86,15 @@ public class TilePreviewExporter implements ByteExporter, LongTask {
             System.out.println("No such method exception: " + e.getMessage());
         }
         
+        int lastTicket = 0;
+        for (int i = 0; i <= this.getLevels(); i++) {
+            lastTicket += ((Double) Math.pow(2, 2 * i)).intValue();
+        }
+        Progress.start(progress, lastTicket);
         do {
+            if (cancel) {
+                break;
+            }
             controller.refreshPreview();            
 
             Point p = model.getTopLeftPosition();
@@ -115,9 +125,6 @@ public class TilePreviewExporter implements ByteExporter, LongTask {
             }
 
             target = (ProcessingTarget) controller.getRenderTarget(RenderTarget.PROCESSING_TARGET, workspace);
-            if (target instanceof LongTask) {
-                //((LongTask) target).setProgressTicket(progress);
-            }
 
             try {
                 target.getGraphics().noSmooth();
@@ -154,14 +161,16 @@ public class TilePreviewExporter implements ByteExporter, LongTask {
                 x = 0;
                 y = 0;
             }
+            Progress.progress(progress);
         } while (!this.isLast());
+
         //Fix bug caused by keeping width and height in the workspace preview properties.
         //When a .gephi file is loaded later with these properties PGraphics will be created instead of a PApplet
         props.removeSimpleValue("width");
         props.removeSimpleValue("height");
         props.removeSimpleValue(PreviewProperty.MARGIN);
         props.putValue(PreviewProperty.BACKGROUND_COLOR, oldColor);
-        //Progress.finish(progress);
+        Progress.finish(progress);
 
         return !cancel;
     }
@@ -229,7 +238,7 @@ public class TilePreviewExporter implements ByteExporter, LongTask {
     
     @Override
     public void setProgressTicket(ProgressTicket progressTicket) {
-//        this.progress = progressTicket;
+        this.progress = progressTicket;
     }
 
     public boolean isLast() {
