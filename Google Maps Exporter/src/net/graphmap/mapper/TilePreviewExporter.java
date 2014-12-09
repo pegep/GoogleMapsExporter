@@ -46,7 +46,6 @@ public class TilePreviewExporter implements ByteExporter, LongTask {
     private OutputStream stream;
     private int width = 256;
     private int height = 256;
-    private boolean transparentBackground = true;
     private ProcessingTarget target;
     private int x = 0;
     private int y = 0;
@@ -60,15 +59,14 @@ public class TilePreviewExporter implements ByteExporter, LongTask {
 
     @Override
     public boolean execute() {
-        //Progress.start(progress);
         PreviewController controller = Lookup.getDefault().lookup(PreviewController.class);
         controller.getModel(workspace).getProperties().putValue(PreviewProperty.VISIBILITY_RATIO, 1.0);
         
         PreviewProperties props = controller.getModel(workspace).getProperties();
         Color oldColor = props.getColorValue(PreviewProperty.BACKGROUND_COLOR);
-        if (transparentBackground) {
-            props.putValue(PreviewProperty.BACKGROUND_COLOR, new Color(255, 255, 255, 0));//White transparent
-        }
+        
+        props.putValue(PreviewProperty.BACKGROUND_COLOR, new Color(255, 255, 255, 0)); //White transparent
+        
         props.putValue(PreviewProperty.MARGIN, 0f);
         props.putValue(PreviewProperty.NODE_LABEL_FONT, props.getFontValue(PreviewProperty.NODE_LABEL_FONT).deriveFont(Font.PLAIN, Math.max(1, 4 / (z + 1))));
         props.putValue("width", width);
@@ -77,6 +75,7 @@ public class TilePreviewExporter implements ByteExporter, LongTask {
         PreviewModel model = controller.getModel(workspace);
         Method mSetDimensions = null;
         Method mSetTopLeftPosition = null;
+        
         try {
             mSetDimensions = model.getClass().getMethod("setDimensions", Dimension.class);
             mSetTopLeftPosition = model.getClass().getMethod("setTopLeftPosition", Point.class);
@@ -90,11 +89,14 @@ public class TilePreviewExporter implements ByteExporter, LongTask {
         for (int i = 0; i <= this.getLevels(); i++) {
             lastTicket += ((Double) Math.pow(2, 2 * i)).intValue();
         }
+        
         Progress.start(progress, lastTicket);
+        
         do {
             if (cancel) {
                 break;
             }
+            
             controller.refreshPreview();            
 
             Point p = model.getTopLeftPosition();
@@ -161,6 +163,7 @@ public class TilePreviewExporter implements ByteExporter, LongTask {
                 x = 0;
                 y = 0;
             }
+            
             Progress.progress(progress);
         } while (!this.isLast());
 
@@ -217,14 +220,6 @@ public class TilePreviewExporter implements ByteExporter, LongTask {
 
     public void setCustomTopLeftPosition(Point p) {
         this.customTopLeftPosition = p;
-    }
-
-    public boolean isTransparentBackground() {
-        return transparentBackground;
-    }
-
-    public void setTransparentBackground(boolean transparentBackground) {
-        this.transparentBackground = transparentBackground;
     }
 
     @Override
