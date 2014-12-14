@@ -14,14 +14,12 @@ import org.gephi.desktop.io.export.spi.ExporterClassUI;
 import org.gephi.io.exporter.api.ExportController;
 import org.gephi.utils.longtask.api.LongTaskErrorHandler;
 import org.gephi.utils.longtask.api.LongTaskExecutor;
-import org.gephi.utils.progress.Progress;
-import org.gephi.utils.progress.ProgressTicket;
-import org.gephi.utils.progress.ProgressTicketProvider;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.ServiceProvider;
+import uk.ac.ox.oii.jsonexporter.JSONExporter;
 
 /**
  * @author Pekka Maksimainen
@@ -62,6 +60,7 @@ public class TileExporterUI implements ExporterClassUI {
     @Override
     public void action() {
         final TilePreviewExporter exporter = new TilePreviewExporter();
+        final JSONExporter je = new JSONExporter();
         TileExporterPanel settingPanel = new TileExporterPanel();
         settingPanel.setup(exporter);
         final DialogDescriptor dd = new DialogDescriptor(settingPanel, "Google Maps Exporter");
@@ -125,9 +124,8 @@ public class TileExporterUI implements ExporterClassUI {
                             }
                         }
                         
-                       
-                        // Save JavaScript
-                        
+                        ec.exportFile(new File(filePath + File.separator + "graph.json"), je);
+
                     } catch (IOException ex) {
                         ex.printStackTrace();
                     }
