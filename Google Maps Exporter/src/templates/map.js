@@ -15,9 +15,20 @@ $(document).ready(function() {
 var Mapper = (function() {
     var map, 
         coordinateMapType,
+        markers = [],
+        activeNodes = [],
         flipV, 
         verbose = false,
         initialized = false;
+
+    var basicMarker = new google.maps.MarkerImage('marker.png',
+                          new google.maps.Size(20, 20), // size
+                          new google.maps.Point(0, 0), // center
+                          new google.maps.Point(10, 10)); // anchor
+
+    var grpClick = function() {
+        console.log('click');
+    }
 
     function CoordMapType() {};
     CoordMapType.prototype.tileSize = new google.maps.Size(256, 256);
@@ -209,7 +220,6 @@ var Mapper = (function() {
                 }, false);
 
             // set the controls for the heart of the sun
-            var minx = 0, miny = 0, maxx = 0, maxy = 0;
             coordinateMapType = new CoordMapType();
             coordinateMapType.boundaries.minx = minx;
             coordinateMapType.boundaries.miny = miny;
@@ -221,8 +231,14 @@ var Mapper = (function() {
             map.setMapTypeId('coordinate');
             initialized = true;
         },
+        setIdleFunc: function(func) {
+	       google.maps.event.addListener(map, 'idle', func);
+	    },
         getMap: function() {
             return map;
+        },
+        getClickFunc: function() {
+            return grpClick;
         },
         getBounds: function() {
             var bounds = map.getBounds();
@@ -304,6 +320,52 @@ var Mapper = (function() {
             lat = cy;
 
             return [lat, lng];
+        },
+        insertNodes: function(data) {
+            var zoomLevel = 15;
+            var locConv = function(loc) {
+            var lat = loc.lat();
+            var lng = loc.lng();
+            var zoom = 8;
+            var divisor = Math.pow(2, zoom); // tile width in cartesian (1 = 360 degrees in width or so)
+            var lng2 = (lng+180) / divisor;
+            var lat2 = (lat+85) / divisor;
+            return new google.maps.LatLng(lat2, lng2);
+            }
+            if (zoomLevel > 0) {
+            for (i in data.nodes) {
+                var node = data.nodes[i];
+                var latLng = Mapper.coord2LatLng(node.x, node.y);
+                var lat = parseFloat(latLng[0]);
+                var lng = parseFloat(latLng[1]);
+                var loc = new google.maps.LatLng(lat, lng);
+    //          loc = locConv(loc);
+                var marker = activeNodes[node.id] ? pointerMarker : basicMarker;
+                if (markerIds.indexOf(node.id) < 0) {
+
+                var marker = new google.maps.Marker({
+                    position: loc,
+                    map: map,
+                    title: node.groupName + " (" + node.x + ", " + node.y + "), size: " + node.size + " id: " + node.id,
+                    optimized: false,
+                    icon: marker,
+                    id: node.id,
+                    animation: google.maps.Animation.DROP
+                });
+                google.maps.event.addListener(marker, 'click', Mapper.getClickFunc());
+
+                markers.push(marker);
+                markerIds.push(node.id);
+                }
+            }
+            }
+        },
+        removeNodes: function() {
+            // todo: implement removing just the nodes given as parameter
+            markerIds = [];
+            for (var i = 0; i < markers.length; i++) {
+            markers[i].setMap(null);
+            }
         },
         flipV: function(b) {
             flipV = b;

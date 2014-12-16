@@ -6,10 +6,13 @@ Website : http://graphmap.net
 package net.graphmap.mapper;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.gephi.desktop.io.export.spi.ExporterClassUI;
 import org.gephi.io.exporter.api.ExportController;
 import org.gephi.utils.longtask.api.LongTaskErrorHandler;
@@ -91,23 +94,48 @@ public class TileExporterUI implements ExporterClassUI {
                         
                         // Save HTML
                         InputStream sourceHtml = null;
-                        InputStream sourceJs = null;
+                        InputStream sourceMapJs = null;
+                        InputStream sourceTaffyJs = null;
+                        InputStream sourceUiJs = null;
+                        InputStream sourceMarkerPng = null;
                         OutputStream destinationHtml = null;                        
-                        OutputStream destinationJs = null;
+                        OutputStream destinationMapJs = null;
+                        OutputStream destinationTaffyJs = null;
+                        OutputStream destinationUiJs = null;
+                        OutputStream destinationMarkerPng = null;
                         try {
                             File outFileHtml = new File(filePath + File.separator + "index.html");
-                            File outFileJs = new File(filePath + File.separator + "map.js");
+                            File outFileMapJs = new File(filePath + File.separator + "map.js");
+                            File outFileTaffyJs = new File(filePath + File.separator + "taffy.js");
+                            File outFileUiJs = new File(filePath + File.separator + "ui.js");
+                            File outFileMarkerPng = new File(filePath + File.separator + "marker.png");
+
                             sourceHtml = getClass().getResourceAsStream("/templates/index.html");
-                            sourceJs = getClass().getResourceAsStream("/templates/map.js");
+                            sourceMapJs = getClass().getResourceAsStream("/templates/map.js");
+                            sourceTaffyJs = getClass().getResourceAsStream("/templates/taffy.js");
+                            sourceUiJs = getClass().getResourceAsStream("/templates/ui.js");
+                            sourceMarkerPng = getClass().getResourceAsStream("/templates/marker.png");
                             destinationHtml = new FileOutputStream(outFileHtml);
-                            destinationJs = new FileOutputStream(outFileJs);
+                            destinationMapJs = new FileOutputStream(outFileMapJs);
+                            destinationTaffyJs = new FileOutputStream(outFileTaffyJs);
+                            destinationUiJs = new FileOutputStream(outFileUiJs);
+                            destinationMarkerPng = new FileOutputStream(outFileMarkerPng);
                             byte[] buf = new byte[1024];
                             int bytesRead;
                             while ((bytesRead = sourceHtml.read(buf)) > 0) {
                                 destinationHtml.write(buf, 0, bytesRead);
                             }
-                            while ((bytesRead = sourceJs.read(buf)) > 0) {
-                                destinationJs.write(buf, 0, bytesRead);
+                            while ((bytesRead = sourceMapJs.read(buf)) > 0) {
+                                destinationMapJs.write(buf, 0, bytesRead);
+                            }
+                            while ((bytesRead = sourceTaffyJs.read(buf)) > 0) {
+                                destinationTaffyJs.write(buf, 0, bytesRead);
+                            }
+                            while ((bytesRead = sourceUiJs.read(buf)) > 0) {
+                                destinationUiJs.write(buf, 0, bytesRead);
+                            }
+                            while ((bytesRead = sourceMarkerPng.read(buf)) > 0) {
+                                destinationMarkerPng.write(buf, 0, bytesRead);
                             }
                         } finally {
                             if (sourceHtml != null) {
@@ -116,16 +144,33 @@ public class TileExporterUI implements ExporterClassUI {
                             if (destinationHtml != null) {
                                 destinationHtml.close();
                             }
-                            if (sourceJs != null) {
-                                sourceJs.close();
+                            if (sourceMapJs != null) {
+                                sourceMapJs.close();
                             }
-                            if (destinationJs != null) {
-                                destinationJs.close();
+                            if (destinationMapJs != null) {
+                                destinationMapJs.close();
+                            }
+                            if (destinationTaffyJs != null) {
+                                destinationTaffyJs.close();
+                            }
+                            if (destinationUiJs != null) {
+                                destinationUiJs.close();
+                            }
+                            if (destinationMarkerPng != null) {
+                                destinationMarkerPng.close();
                             }
                         }
-                        
-                        ec.exportFile(new File(filePath + File.separator + "graph.json"), je);
-
+                        File graphFile = new File(filePath + File.separator + "graph.json");
+                        ec.exportFile(graphFile, je);
+                        FileInputStream graphInputStream = new FileInputStream(filePath + File.separator + "graph.json");
+                        try {
+                            String graphJSON = IOUtils.toString(graphInputStream);
+                            StringBuilder sb = new StringBuilder(graphJSON);
+                            sb.insert(0, "var graph = ");
+                            FileUtils.writeStringToFile(graphFile, sb.toString());
+                        } finally {
+                            graphInputStream.close();
+                        }
                     } catch (IOException ex) {
                         ex.printStackTrace();
                     }

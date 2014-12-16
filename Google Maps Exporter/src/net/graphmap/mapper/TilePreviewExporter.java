@@ -18,6 +18,7 @@ import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import javax.imageio.ImageIO;
+import org.apache.commons.io.FileUtils;
 import org.gephi.io.exporter.spi.ByteExporter;
 import org.gephi.preview.api.PreviewController;
 import org.gephi.preview.api.PreviewModel;
@@ -97,7 +98,7 @@ public class TilePreviewExporter implements ByteExporter, LongTask {
                 break;
             }
             
-            controller.refreshPreview();            
+            controller.refreshPreview();
 
             Point p = model.getTopLeftPosition();
             d = model.getDimensions();
@@ -173,6 +174,34 @@ public class TilePreviewExporter implements ByteExporter, LongTask {
         props.removeSimpleValue("height");
         props.removeSimpleValue(PreviewProperty.MARGIN);
         props.putValue(PreviewProperty.BACKGROUND_COLOR, oldColor);
+        
+        controller.refreshPreview();
+
+        // Following steps set the observation window to be square. That is, if the x-axis is
+        // wider than y-axis then y-axis will be made taller on maxy position - and vice versa.
+        // This fixes alignment issues that sometimes make sense and sometimes not. This way it works.
+        int minx = (int) model.getTopLeftPosition().getX();
+        int miny = (int) model.getTopLeftPosition().getY();
+        int maxx = (int) (model.getTopLeftPosition().getX() + model.getDimensions().getWidth());
+        int maxy = (int) (model.getTopLeftPosition().getY() + model.getDimensions().getHeight());
+        if (maxx - minx < maxy - miny) {
+            maxx = maxx + (int) (model.getDimensions().getHeight() - model.getDimensions().getWidth());
+        } else {
+            maxy = maxy + (int) (model.getDimensions().getWidth() - model.getDimensions().getHeight());
+        }
+        
+        StringBuilder bounds = new StringBuilder();
+        bounds.append("var minx = ").append(model.getTopLeftPosition().getX()).append(";\n")
+        .append("var miny = ").append(model.getTopLeftPosition().getY()).append(";\n")
+        .append("var maxx = ").append(maxx).append(";\n")
+        .append("var maxy = ").append(maxy).append(";\n");
+        
+        try {
+            FileUtils.writeStringToFile(new File(directory + File.separator + "bounds.js"), bounds.toString());
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+
         Progress.finish(progress);
 
         return !cancel;

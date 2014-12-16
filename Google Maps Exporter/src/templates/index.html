@@ -4,7 +4,11 @@
 		<meta charset="UTF-8" />
 		<script type="application/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.1/jquery.min.js"></script>
 		<script type="application/javascript" src="https://maps.googleapis.com/maps/api/js?sensor=false"></script>  
+                <script type="application/javascript" src="bounds.js"></script>
 		<script type="application/javascript" src="map.js"></script>
+                <script type="application/javascript" src="graph.json"></script>
+                <script type="application/javascript" src="taffy.js"></script>
+                <script type="application/javascript" src="ui.js"></script>
 		<style>
 			html, body {
 				margin: 0;
@@ -19,11 +23,20 @@
                                 background-image: -moz-radial-gradient(left top, ellipse farthest-side, #072733 0%, #000305 100%);
                                 background-image: -moz-radial-gradient(left top, ellipse farthest-side, #072733 0%, #000305 100%);
 			}
+			.info {
+				position: absolute;
+				left: 1em;
+				top: 1em;
+				color: white;
+			}
 		</style>
 	</head>
 	<body>
 		<div id="map_canvas">
 			<p>Loading...</p>
+		</div>
+		<div class="info">
+			<ol></ol>
 		</div>
 	</body>
 </html>
