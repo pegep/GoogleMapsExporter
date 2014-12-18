@@ -20,6 +20,7 @@ public class TileExporterPanel extends javax.swing.JPanel {
     final String LAST_PATH = "TileExporterPanel_Last_Path";
     private File path;
     private TilePreviewExporter exporter;
+    private boolean isExportJson;
     
     public TileExporterPanel() {
         initComponents();
@@ -45,6 +46,7 @@ public class TileExporterPanel extends javax.swing.JPanel {
         levelsTextField.setText(Integer.toString(exporter.getLevels()));
         path = new File(NbPreferences.forModule(TileExporterPanel.class).get(LAST_PATH, System.getProperty("user.home")+"/tiles"));
         directoryTextField.setText(path.getAbsolutePath());
+        exportJsonCheckBox.setSelected(exporter.isExportJson());
     }
 
     public void unsetup(boolean update) {
@@ -55,6 +57,7 @@ public class TileExporterPanel extends javax.swing.JPanel {
                 exporter.setHeight(Integer.parseInt(heightTextField.getText()));
                 exporter.setLevels(Integer.parseInt(levelsTextField.getText()));
                 exporter.setDirectory(path.getAbsolutePath());
+                exporter.setExportJson(exportJsonCheckBox.isSelected());
             } catch (Exception ex) {
             }
         }
@@ -82,6 +85,7 @@ public class TileExporterPanel extends javax.swing.JPanel {
         levelsTextField = new javax.swing.JTextField();
         levelsDescriptionLabel = new javax.swing.JLabel();
         browseButton = new javax.swing.JButton();
+        exportJsonCheckBox = new javax.swing.JCheckBox();
 
         setPreferredSize(new java.awt.Dimension(325, 145));
 
@@ -119,6 +123,9 @@ public class TileExporterPanel extends javax.swing.JPanel {
 
         browseButton.setText(org.openide.util.NbBundle.getMessage(TileExporterPanel.class, "TileExporterPanel.browseButton.text")); // NOI18N
 
+        exportJsonCheckBox.setText(org.openide.util.NbBundle.getMessage(TileExporterPanel.class, "TileExporterPanel.exportJsonCheckBox.text")); // NOI18N
+        exportJsonCheckBox.setAutoscrolls(true);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -152,7 +159,8 @@ public class TileExporterPanel extends javax.swing.JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(directoryTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(browseButton)))
+                        .addComponent(browseButton))
+                    .addComponent(exportJsonCheckBox))
                 .addGap(273, 273, 273))
         );
         layout.setVerticalGroup(
@@ -185,7 +193,8 @@ public class TileExporterPanel extends javax.swing.JPanel {
                             .addComponent(directoryTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(directoryLabel)
                             .addComponent(browseButton))))
-                .addContainerGap(33, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 10, Short.MAX_VALUE)
+                .addComponent(exportJsonCheckBox))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -197,6 +206,7 @@ public class TileExporterPanel extends javax.swing.JPanel {
     private javax.swing.JButton browseButton;
     private javax.swing.JLabel directoryLabel;
     private javax.swing.JTextField directoryTextField;
+    private javax.swing.JCheckBox exportJsonCheckBox;
     private javax.swing.JLabel heightDescriptionLabel;
     private javax.swing.JLabel heightLabel;
     private javax.swing.JTextField heightTextField;

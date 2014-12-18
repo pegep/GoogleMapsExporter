@@ -57,6 +57,7 @@ public class TilePreviewExporter implements ByteExporter, LongTask {
     private Point customTopLeftPosition;
     private Dimension d;
     private String directory;
+    private boolean exportJson = true;
 
     @Override
     public boolean execute() {
@@ -190,16 +191,18 @@ public class TilePreviewExporter implements ByteExporter, LongTask {
             maxy = maxy + (int) (model.getDimensions().getWidth() - model.getDimensions().getHeight());
         }
         
-        StringBuilder bounds = new StringBuilder();
-        bounds.append("var minx = ").append(model.getTopLeftPosition().getX()).append(";\n")
-        .append("var miny = ").append(model.getTopLeftPosition().getY()).append(";\n")
-        .append("var maxx = ").append(maxx).append(";\n")
-        .append("var maxy = ").append(maxy).append(";\n");
-        
-        try {
-            FileUtils.writeStringToFile(new File(directory + File.separator + "bounds.js"), bounds.toString());
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
+        if (isExportJson()) {
+            StringBuilder bounds = new StringBuilder();
+            bounds.append("var minx = ").append(model.getTopLeftPosition().getX()).append(";\n")
+            .append("var miny = ").append(model.getTopLeftPosition().getY()).append(";\n")
+            .append("var maxx = ").append(maxx).append(";\n")
+            .append("var maxy = ").append(maxy).append(";\n");
+
+            try {
+                FileUtils.writeStringToFile(new File(directory + File.separator + "bounds.js"), bounds.toString());
+            } catch (IOException ex) {
+                Exceptions.printStackTrace(ex);
+            }
         }
 
         Progress.finish(progress);
@@ -237,6 +240,14 @@ public class TilePreviewExporter implements ByteExporter, LongTask {
 
     public void setDirectory(String directory) {
         this.directory = directory;
+    }
+    
+    public boolean isExportJson() {
+        return exportJson;
+    }
+
+    public void setExportJson(boolean exportJson) {
+        this.exportJson = exportJson;
     }
 
     public void setVerbosity(int verbose) {

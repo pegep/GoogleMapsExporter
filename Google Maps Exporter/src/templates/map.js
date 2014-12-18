@@ -221,6 +221,10 @@ var Mapper = (function() {
 
             // set the controls for the heart of the sun
             coordinateMapType = new CoordMapType();
+            minx = typeof minx === 'undefined' ? 0 : minx;
+            miny = typeof miny === 'undefined' ? 0 : miny;
+            maxx = typeof maxx === 'undefined' ? 0 : maxx;
+            maxy = typeof maxy === 'undefined' ? 0 : maxy;
             coordinateMapType.boundaries.minx = minx;
             coordinateMapType.boundaries.miny = miny;
             coordinateMapType.boundaries.maxx = maxx;

@@ -64,7 +64,7 @@ public class TileExporterUI implements ExporterClassUI {
     public void action() {
         final TilePreviewExporter exporter = new TilePreviewExporter();
         final JSONExporter je = new JSONExporter();
-        TileExporterPanel settingPanel = new TileExporterPanel();
+        final TileExporterPanel settingPanel = new TileExporterPanel();
         settingPanel.setup(exporter);
         final DialogDescriptor dd = new DialogDescriptor(settingPanel, "Google Maps Exporter");
         Object result = DialogDisplayer.getDefault().notify(dd);
@@ -91,7 +91,7 @@ public class TileExporterUI implements ExporterClassUI {
                 public void run() {
                     try {
                         ec.exportFile(new File(filePath + File.separator + exporter.getFilename("tile") + ".png"), exporter);
-                        
+
                         // Save template files
                         InputStream sourceHtml = null;
                         InputStream sourceMapJs = null;
@@ -117,9 +117,11 @@ public class TileExporterUI implements ExporterClassUI {
                             sourceMarkerPng = getClass().getResourceAsStream("/templates/marker.png");
                             destinationHtml = new FileOutputStream(outFileHtml);
                             destinationMapJs = new FileOutputStream(outFileMapJs);
-                            destinationTaffyJs = new FileOutputStream(outFileTaffyJs);
-                            destinationUiJs = new FileOutputStream(outFileUiJs);
-                            destinationMarkerPng = new FileOutputStream(outFileMarkerPng);
+                            if (exporter.isExportJson()) {
+                                destinationTaffyJs = new FileOutputStream(outFileTaffyJs);
+                                destinationUiJs = new FileOutputStream(outFileUiJs);
+                                destinationMarkerPng = new FileOutputStream(outFileMarkerPng);
+                            }
                             byte[] buf = new byte[1024];
                             int bytesRead;
                             while ((bytesRead = sourceHtml.read(buf)) > 0) {
@@ -128,14 +130,16 @@ public class TileExporterUI implements ExporterClassUI {
                             while ((bytesRead = sourceMapJs.read(buf)) > 0) {
                                 destinationMapJs.write(buf, 0, bytesRead);
                             }
-                            while ((bytesRead = sourceTaffyJs.read(buf)) > 0) {
-                                destinationTaffyJs.write(buf, 0, bytesRead);
-                            }
-                            while ((bytesRead = sourceUiJs.read(buf)) > 0) {
-                                destinationUiJs.write(buf, 0, bytesRead);
-                            }
-                            while ((bytesRead = sourceMarkerPng.read(buf)) > 0) {
-                                destinationMarkerPng.write(buf, 0, bytesRead);
+                            if (exporter.isExportJson()) {
+                                while ((bytesRead = sourceUiJs.read(buf)) > 0) {
+                                    destinationUiJs.write(buf, 0, bytesRead);
+                                }
+                                while ((bytesRead = sourceTaffyJs.read(buf)) > 0) {
+                                    destinationTaffyJs.write(buf, 0, bytesRead);
+                                }
+                                while ((bytesRead = sourceMarkerPng.read(buf)) > 0) {
+                                    destinationMarkerPng.write(buf, 0, bytesRead);
+                                }
                             }
                         } finally {
                             if (sourceHtml != null) {
@@ -169,16 +173,19 @@ public class TileExporterUI implements ExporterClassUI {
                                 destinationMarkerPng.close();
                             }
                         }
-                        File graphFile = new File(filePath + File.separator + "graph.json");
-                        ec.exportFile(graphFile, je);
-                        FileInputStream graphInputStream = new FileInputStream(filePath + File.separator + "graph.json");
-                        try {
-                            String graphJSON = IOUtils.toString(graphInputStream);
-                            StringBuilder sb = new StringBuilder(graphJSON);
-                            sb.insert(0, "var graph = ");
-                            FileUtils.writeStringToFile(graphFile, sb.toString());
-                        } finally {
-                            graphInputStream.close();
+
+                        if (exporter.isExportJson()) {
+                            File graphFile = new File(filePath + File.separator + "graph.json");
+                            ec.exportFile(graphFile, je);
+                            FileInputStream graphInputStream = new FileInputStream(filePath + File.separator + "graph.json");
+                            try {
+                                String graphJSON = IOUtils.toString(graphInputStream);
+                                StringBuilder sb = new StringBuilder(graphJSON);
+                                sb.insert(0, "var graph = ");
+                                FileUtils.writeStringToFile(graphFile, sb.toString());
+                            } finally {
+                                graphInputStream.close();
+                            }
                         }
                     } catch (IOException ex) {
                         ex.printStackTrace();

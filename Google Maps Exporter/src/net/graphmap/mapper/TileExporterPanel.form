@@ -58,6 +58,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="browseButton" min="-2" max="-2" attributes="0"/>
                   </Group>
+                  <Component id="exportJsonCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace min="-2" pref="273" max="-2" attributes="0"/>
           </Group>
@@ -102,7 +103,8 @@
                       </Group>
                   </Group>
               </Group>
-              <EmptySpace pref="33" max="32767" attributes="0"/>
+              <EmptySpace pref="10" max="32767" attributes="0"/>
+              <Component id="exportJsonCheckBox" min="-2" max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -190,6 +192,14 @@
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="net/graphmap/mapper/Bundle.properties" key="TileExporterPanel.browseButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JCheckBox" name="exportJsonCheckBox">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="net/graphmap/mapper/Bundle.properties" key="TileExporterPanel.exportJsonCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+        <Property name="autoscrolls" type="boolean" value="true"/>
       </Properties>
     </Component>
   </SubComponents>
