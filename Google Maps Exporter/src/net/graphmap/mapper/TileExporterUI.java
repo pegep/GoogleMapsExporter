@@ -92,7 +92,7 @@ public class TileExporterUI implements ExporterClassUI {
                     try {
                         ec.exportFile(new File(filePath + File.separator + exporter.getFilename("tile") + ".png"), exporter);
                         
-                        // Save HTML
+                        // Save template files
                         InputStream sourceHtml = null;
                         InputStream sourceMapJs = null;
                         InputStream sourceTaffyJs = null;
@@ -150,11 +150,20 @@ public class TileExporterUI implements ExporterClassUI {
                             if (destinationMapJs != null) {
                                 destinationMapJs.close();
                             }
+                            if (sourceTaffyJs != null) {
+                                destinationTaffyJs.close();
+                            }
                             if (destinationTaffyJs != null) {
                                 destinationTaffyJs.close();
                             }
+                            if (sourceUiJs != null) {
+                                destinationUiJs.close();
+                            }
                             if (destinationUiJs != null) {
                                 destinationUiJs.close();
+                            }
+                            if (sourceMarkerPng != null) {
+                                destinationMarkerPng.close();
                             }
                             if (destinationMarkerPng != null) {
                                 destinationMarkerPng.close();
@@ -176,8 +185,6 @@ public class TileExporterUI implements ExporterClassUI {
                     }
                 }
             });
-            
-            //ec.exportFiles(new File(filePath), tpe);
         }
     }
 }
