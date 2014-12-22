@@ -40,7 +40,6 @@ import processing.core.PGraphicsJava2D;
  */
 public class TileExporter implements ByteExporter, LongTask {
 
-//    private ProgressTicket progress;
     private boolean cancel = false;
     private Workspace workspace;
     private ProgressTicket progress;
