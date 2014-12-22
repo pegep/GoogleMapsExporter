@@ -62,7 +62,7 @@ public class TileExporterUI implements ExporterClassUI {
     
     @Override
     public void action() {
-        final TilePreviewExporter exporter = new TilePreviewExporter();
+        final TileExporter exporter = new TileExporter();
         final JSONExporter je = new JSONExporter();
         final TileExporterPanel settingPanel = new TileExporterPanel();
         settingPanel.setup(exporter);

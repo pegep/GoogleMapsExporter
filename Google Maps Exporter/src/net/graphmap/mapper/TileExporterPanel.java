@@ -19,7 +19,7 @@ public class TileExporterPanel extends javax.swing.JPanel {
     
     final String LAST_PATH = "TileExporterPanel_Last_Path";
     private File path;
-    private TilePreviewExporter exporter;
+    private TileExporter exporter;
     private boolean isExportJson;
     
     public TileExporterPanel() {
@@ -39,7 +39,7 @@ public class TileExporterPanel extends javax.swing.JPanel {
         });
     }
 
-    public void setup(TilePreviewExporter exporter) {
+    public void setup(TileExporter exporter) {
         this.exporter = exporter;
         heightTextField.setText(Integer.toString(exporter.getHeight()));
         widthTextField.setText(Integer.toString(exporter.getWidth()));
