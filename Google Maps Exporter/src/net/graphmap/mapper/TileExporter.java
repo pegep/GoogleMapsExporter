@@ -33,6 +33,7 @@ import org.gephi.utils.progress.ProgressTicket;
 import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import processing.core.PGraphicsJava2D;
+import processing.core.PImage;
 
 /**
  *
@@ -46,6 +47,7 @@ public class TileExporter implements ByteExporter, LongTask {
     private OutputStream stream;
     private int width = 256;
     private int height = 256;
+    private int step = 4; // render w*step x h*step sized image and then crop appropriate pieces instead of rendering each piece as a single w*h sized image
     private ProcessingTarget target;
     private int x = 0;
     private int y = 0;
@@ -72,7 +74,7 @@ public class TileExporter implements ByteExporter, LongTask {
         props.putValue(PreviewProperty.NODE_LABEL_FONT, props.getFontValue(PreviewProperty.NODE_LABEL_FONT).deriveFont(Font.PLAIN, Math.max(1, 4 / (z + 1))));
         props.putValue("width", width);
         props.putValue("height", height);
-
+        
         PreviewModel model = controller.getModel(workspace);
         Method mSetDimensions = null;
         Method mSetTopLeftPosition = null;
@@ -92,7 +94,7 @@ public class TileExporter implements ByteExporter, LongTask {
         }
         
         Progress.start(progress, lastTicket);
-        
+        long start = System.currentTimeMillis();
         do {
             if (cancel) {
                 break;
@@ -108,7 +110,9 @@ public class TileExporter implements ByteExporter, LongTask {
             int dim = Math.max(tileWidth, tileHeight);
 
             try {
-                mSetDimensions.invoke(model, new Dimension(dim, dim));
+                mSetDimensions.invoke(model, new Dimension(dim * step, dim * step));
+                props.putValue("width", width * step);
+                props.putValue("height", height * step);
                 mSetTopLeftPosition.invoke(model, new Point(p.x + (x * dim), p.y + (y * dim)));
             } catch (IllegalAccessException ex) {
                 Exceptions.printStackTrace(ex);
@@ -134,10 +138,22 @@ public class TileExporter implements ByteExporter, LongTask {
                 target.refresh();
 
                 PGraphicsJava2D pg2 = (PGraphicsJava2D) target.getGraphics();
-                BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-                img.setRGB(0, 0, width, height, pg2.pixels, 0, width);
-                stream = new BufferedOutputStream(new FileOutputStream(new File(directory + File.separator + this.getFilename("tile") + ".png")));
-                ImageIO.write(img, "png", stream);
+                for (int i = 0; i < step; i++) {
+                    for (int j = 0; j < step; j++) {
+                        if (x + i > Math.pow(2, z)) {
+                            continue;
+                        }
+                        if (y + j > Math.pow(2, z)) {
+                            continue;
+                        }
+                        PImage piece = pg2.get(width * i, height * j, width, height);
+                        BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+                        img.setRGB(0, 0, width, height, piece.pixels, 0, width);
+                        stream = new BufferedOutputStream(new FileOutputStream(new File(directory + File.separator + this.getFilename("tile", x + i, y + j) + ".png")));
+                        ImageIO.write(img, "png", stream);
+                        Progress.progress(progress);
+                    }
+                }
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -149,24 +165,11 @@ public class TileExporter implements ByteExporter, LongTask {
                 Exceptions.printStackTrace(ex);
             }
             
-            x++;
-            if (x == Math.pow(2, z) && y != Math.pow(2, z) - 1) { // x is at eol
-                x = 0;
-                y++; // next row
-            }
-            if ((x == Math.pow(2, z) && y == Math.pow(2, z) - 1)) { // x and y at eol
-                z++;
-                x = 0;
-                y = 0;
-            }
-            if (z == 0) {
-                z++;
-                x = 0;
-                y = 0;
-            }
+            nextTile();
             
-            Progress.progress(progress);
         } while (!this.isLast());
+        
+        System.out.println("Finished rendering in " + (int) (System.currentTimeMillis() - start) / 1000 + " seconds");
 
         //Fix bug caused by keeping width and height in the workspace preview properties.
         //When a .gephi file is loaded later with these properties PGraphics will be created instead of a PApplet
@@ -207,6 +210,24 @@ public class TileExporter implements ByteExporter, LongTask {
         Progress.finish(progress);
 
         return !cancel;
+    }
+    
+    private void nextTile() {
+        x = x + step;
+        if (x >= (Math.pow(2, z)) && (y < Math.pow(2, z) - step)) { // x is at eol
+            x = 0;
+            y = y + step; // next row
+        }
+        if ((x >= Math.pow(2, z) && y >= Math.pow(2, z) - step)) { // x and y at eol
+            z++;
+            x = 0;
+            y = 0;
+        }
+        if (z == 0) {
+            z++;
+            x = 0;
+            y = 0;
+        }
     }
 
     public int getHeight() {
@@ -280,6 +301,10 @@ public class TileExporter implements ByteExporter, LongTask {
     }
 
     public String getFilename(String filename) {
+        return filename + "-" + x + "-" + y + "-" + z;
+    }
+    
+    public String getFilename(String filename, int x, int y) {
         return filename + "-" + x + "-" + y + "-" + z;
     }
 
