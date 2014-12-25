@@ -207,7 +207,7 @@ var Mapper = (function() {
 
             if (verbose) {
                 google.maps.event.addListener(map, 'mousemove', function(event) {
-                    console.log('Coord.X.Y: ' + event.latLng);
+                    console.log('Coord.LAT.LNG: ' + event.latLng);
                     console.log('Point.X.Y: ' + latLng2Coord(event.latLng.lat(), event.latLng.lng()))
                 });
             }
