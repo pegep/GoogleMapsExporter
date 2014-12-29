@@ -59,6 +59,8 @@ public class TileExporter implements ByteExporter, LongTask {
     private Dimension dimensions;
     private String directory;
     private boolean exportJson = true;
+    private long start;
+    private long layerStart;
 
     @Override
     public boolean execute() {
@@ -96,7 +98,8 @@ public class TileExporter implements ByteExporter, LongTask {
         }
         
         Progress.start(progress, lastTicket);
-        long start = System.currentTimeMillis();
+        start = System.currentTimeMillis();
+        layerStart = System.currentTimeMillis();
         Point topLeft = model.getTopLeftPosition();
         dimensions = model.getDimensions();
         
@@ -153,6 +156,7 @@ public class TileExporter implements ByteExporter, LongTask {
 
             //OutputStream stream2 = null;
             try {
+                Progress.setDisplayName(progress, "Rendering tile " + this.getFilename("tile", x, y));
                 target.getGraphics().noSmooth();
                 target.refresh();
 
@@ -178,13 +182,13 @@ public class TileExporter implements ByteExporter, LongTask {
                         if (verbose > 0) {
                             System.out.println("Cropping:          " + this.getFilename("tile", x + i, y + j));
                         }
+                        Progress.setDisplayName(progress, "Rendering tile " + this.getFilename("tile", x + i, y + j));
                         PImage piece = pg2.get(width * i, height * j, width, height);
                         BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
                         img.setRGB(0, 0, width, height, piece.pixels, 0, width);
                         stream = new BufferedOutputStream(new FileOutputStream(new File(directory + File.separator + this.getFilename("tile", x + i, y + j) + ".png")));
                         ImageIO.write(img, "png", stream);
                         Progress.progress(progress);
-                        Progress.setDisplayName(progress, "Working on " + this.getFilename("tile", x + i, y + j));
                     }
                 }
                 if (verbose > 0) {
@@ -263,6 +267,8 @@ public class TileExporter implements ByteExporter, LongTask {
             if (verbose > 0) {
                 System.out.println("Next level: " + z);
             }
+            System.out.println("Done rendering layer in " + (int) (System.currentTimeMillis() - layerStart) / 1000 + " seconds");
+            layerStart = System.currentTimeMillis();
         }
         if (z == 0) {
             z++;
