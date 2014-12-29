@@ -71,8 +71,7 @@ public class TileExporter implements ByteExporter, LongTask {
         props.putValue(PreviewProperty.BACKGROUND_COLOR, new Color(255, 255, 255, 0)); //White transparent
         
         props.putValue(PreviewProperty.MARGIN, 0f);
-        props.putValue(PreviewProperty.NODE_LABEL_FONT, props.getFontValue(PreviewProperty.NODE_LABEL_FONT).deriveFont(Font.PLAIN, Math.max(1, 4 / (z + 1))));
-
+        
         props.putValue("width", width * step);
         props.putValue("height", height * step);
         
@@ -105,6 +104,8 @@ public class TileExporter implements ByteExporter, LongTask {
             if (cancel) {
                 break;
             }
+            
+            props.putValue(PreviewProperty.NODE_LABEL_FONT, props.getFontValue(PreviewProperty.NODE_LABEL_FONT).deriveFont(Font.PLAIN, Math.max(1, 4 / (z + 1))));
             
             //controller.refreshPreview();
 
