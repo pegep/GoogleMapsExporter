@@ -47,16 +47,16 @@ public class TileExporter implements ByteExporter, LongTask {
     private OutputStream stream;
     private int width = 256;
     private int height = 256;
-    private int step = 4; // render w*step x h*step sized image and then crop appropriate pieces instead of rendering each piece as a single w*h sized image
+    private int step = 8; // render w*step x h*step sized image and then crop appropriate pieces instead of rendering each piece as a single w*h sized image
     private ProcessingTarget target;
     private int x = 0;
     private int y = 0;
     private int z = 0;
     private int levels = 3;
-    private int verbose = 1;
+    private int verbose = 0;
     private Dimension customDimensions;
     private Point customTopLeftPosition;
-    private Dimension d;
+    private Dimension dimensions;
     private String directory;
     private boolean exportJson = true;
 
@@ -72,12 +72,15 @@ public class TileExporter implements ByteExporter, LongTask {
         
         props.putValue(PreviewProperty.MARGIN, 0f);
         props.putValue(PreviewProperty.NODE_LABEL_FONT, props.getFontValue(PreviewProperty.NODE_LABEL_FONT).deriveFont(Font.PLAIN, Math.max(1, 4 / (z + 1))));
-        props.putValue("width", width);
-        props.putValue("height", height);
+
+        props.putValue("width", width * step);
+        props.putValue("height", height * step);
         
         PreviewModel model = controller.getModel(workspace);
         Method mSetDimensions = null;
         Method mSetTopLeftPosition = null;
+        
+        controller.refreshPreview();
         
         try {
             mSetDimensions = model.getClass().getMethod("setDimensions", Dimension.class);
@@ -95,25 +98,40 @@ public class TileExporter implements ByteExporter, LongTask {
         
         Progress.start(progress, lastTicket);
         long start = System.currentTimeMillis();
+        Point topLeft = model.getTopLeftPosition();
+        dimensions = model.getDimensions();
+        
         do {
             if (cancel) {
                 break;
             }
             
-            controller.refreshPreview();
+            //controller.refreshPreview();
 
-            Point p = model.getTopLeftPosition();
-            d = model.getDimensions();
             int divisor = (int) Math.pow(2, z);
-            int tileWidth = d.width / divisor;
-            int tileHeight = d.height / divisor;
-            int dim = Math.max(tileWidth, tileHeight);
+            float tileWidth = (float)  dimensions.width / divisor;
+            float tileHeight = (float) dimensions.height / divisor;
+            float dim = Math.max(tileWidth, tileHeight);
+            // We may get imprecision here that affects the alignment of nodes. PreviewModel requires dimensions
+            // in Dimension object that does not allow floating point precision. As the rendering window gets 
+            // smaller in every zoom level we get rounding errors. This becomes an issue when graph's coordinates
+            // are not on broad scale. Eg. rendering window that would require 2.75*2.75 wide window becomes
+            // 2*2 size and thus becomes slightly misaligned. Using larger step variable remedies this a little.
+            // However more memory is consumed. Other rendering logic (less memory intensive) or graph 
+            // pre-scaling might be better approach.
+            int dimStep = (int) (dim * step);
 
             try {
-                mSetDimensions.invoke(model, new Dimension(dim * step, dim * step));
-                props.putValue("width", width * step);
-                props.putValue("height", height * step);
-                mSetTopLeftPosition.invoke(model, new Point(p.x + (x * dim), p.y + (y * dim)));
+                mSetDimensions.invoke(model, new Dimension(dimStep, dimStep));
+                mSetTopLeftPosition.invoke(model, new Point((int) (topLeft.x + (x * dim)), (int) (topLeft.y + (y * dim))));
+                if (verbose > 0) {
+                    System.out.println("Rendering:         " + this.getFilename("tile"));
+                    System.out.println("Setting dimensions: " + model.getDimensions().width + ", " + model.getDimensions().width);
+                    System.out.println("Setting tLP:       " + model.getTopLeftPosition().x + ", " + model.getTopLeftPosition().y);
+                    System.out.println("Right edge:        " + (model.getTopLeftPosition().x + model.getDimensions().width));
+                    System.out.println("DimStep:           " + dimStep);
+                    System.out.println("Square:           [" + model.getTopLeftPosition().x + ", " + (model.getTopLeftPosition().x + model.getDimensions().width * step) + "], [" + model.getTopLeftPosition().y + ", " + (model.getTopLeftPosition().y + model.getDimensions().height * step) + "]");
+                }
             } catch (IllegalAccessException ex) {
                 Exceptions.printStackTrace(ex);
             } catch (IllegalArgumentException ex) {
@@ -128,23 +146,36 @@ public class TileExporter implements ByteExporter, LongTask {
                 System.out.println("Dimensions:        " + model.getDimensions().width + " " + model.getDimensions().height);
                 System.out.println("Square:           [" + model.getTopLeftPosition().x + ", " + (model.getTopLeftPosition().x + model.getDimensions().width) + "], [" + model.getTopLeftPosition().y + ", " + (model.getTopLeftPosition().y + model.getDimensions().height) + "]");
                 System.out.println("Tilewidth          " + tileWidth + " " + tileHeight);
-                System.out.println();
             }
 
             target = (ProcessingTarget) controller.getRenderTarget(RenderTarget.PROCESSING_TARGET, workspace);
 
+            //OutputStream stream2 = null;
             try {
                 target.getGraphics().noSmooth();
                 target.refresh();
 
                 PGraphicsJava2D pg2 = (PGraphicsJava2D) target.getGraphics();
+                /*
+                // Save full size image from which the 256x256 pieces are cut
+                BufferedImage imgOrig = new BufferedImage(width * step, height * step, BufferedImage.TYPE_INT_ARGB);
+                imgOrig.setRGB(0, 0, width * step, height * step, pg2.pixels, 0, width * step);
+                stream2 = new BufferedOutputStream(new FileOutputStream(new File(directory + File.separator + this.getFilename("tile", x, y) + "-orig.png")));
+                ImageIO.write(imgOrig, "png", stream2);
+                */
                 for (int i = 0; i < step; i++) {
                     for (int j = 0; j < step; j++) {
-                        if (x + i > Math.pow(2, z)) {
+                        // Comparing against equality (>=) may "crop" the tiles on borders. This is due to rounding errors
+                        // explained near dimStep variable. We'll crop now to reduce amount of tiles produced. Using
+                        // inequality (>) would render one extraneous tile over the borders.
+                        if (x + i >= Math.pow(2, z)) {
                             continue;
                         }
-                        if (y + j > Math.pow(2, z)) {
+                        if (y + j >= Math.pow(2, z)) {
                             continue;
+                        }
+                        if (verbose > 0) {
+                            System.out.println("Cropping:          " + this.getFilename("tile", x + i, y + j));
                         }
                         PImage piece = pg2.get(width * i, height * j, width, height);
                         BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
@@ -152,19 +183,25 @@ public class TileExporter implements ByteExporter, LongTask {
                         stream = new BufferedOutputStream(new FileOutputStream(new File(directory + File.separator + this.getFilename("tile", x + i, y + j) + ".png")));
                         ImageIO.write(img, "png", stream);
                         Progress.progress(progress);
+                        Progress.setDisplayName(progress, "Working on " + this.getFilename("tile", x + i, y + j));
                     }
+                }
+                if (verbose > 0) {
+                    System.out.println();
                 }
             } catch (Exception e) {
                 throw new RuntimeException(e);
+            } finally {
+                try {
+                    stream.flush();
+                    stream.close();
+                    //stream2.flush();
+                    //stream2.close();
+                } catch (IOException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
             }
 
-            try {
-                stream.flush();
-                stream.close();
-            } catch (IOException ex) {
-                Exceptions.printStackTrace(ex);
-            }
-            
             nextTile();
             
         } while (!this.isLast());
@@ -222,6 +259,9 @@ public class TileExporter implements ByteExporter, LongTask {
             z++;
             x = 0;
             y = 0;
+            if (verbose > 0) {
+                System.out.println("Next level: " + z);
+            }
         }
         if (z == 0) {
             z++;
