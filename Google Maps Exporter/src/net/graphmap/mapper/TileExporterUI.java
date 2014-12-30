@@ -32,6 +32,7 @@ public class TileExporterUI implements ExporterClassUI {
 
     private final LongTaskErrorHandler errorHandler;
     private boolean cancelled = true;
+    private final ExporterTileSettings settings = new ExporterTileSettings();
 
     public TileExporterUI() {
         //Create a generic error handler called if the task raises an exception
@@ -65,11 +66,13 @@ public class TileExporterUI implements ExporterClassUI {
         final TileExporter exporter = new TileExporter();
         final JSONExporter je = new JSONExporter();
         final TileExporterPanel settingPanel = new TileExporterPanel();
+        settings.load(exporter);
         settingPanel.setup(exporter);
         final DialogDescriptor dd = new DialogDescriptor(settingPanel, "Google Maps Exporter");
         Object result = DialogDisplayer.getDefault().notify(dd);
         if (result == NotifyDescriptor.OK_OPTION) {
             settingPanel.unsetup(true);
+            settings.save(exporter);
             LongTaskExecutor executor = new LongTaskExecutor(true, "Google Maps Exporter");
             executor.setDefaultErrorHandler(errorHandler);
             
@@ -192,6 +195,33 @@ public class TileExporterUI implements ExporterClassUI {
                     }
                 }
             });
+        } else {
+            settingPanel.unsetup(false);
+        }
+    }
+    
+    private static class ExporterTileSettings {
+
+        private int width = 256;
+        private int height = 256;
+        private int levels = 3;
+        private boolean isExportJson = true;
+        private String path = System.getProperty("user.home") + File.separator + "tiles";
+
+        public void load(TileExporter exporter) {
+            exporter.setHeight(height);
+            exporter.setWidth(width);
+            exporter.setLevels(levels);
+            exporter.setExportJson(isExportJson);
+            exporter.setDirectory(path);
+        }
+
+        public void save(TileExporter exporter) {
+            this.height = exporter.getHeight();
+            this.width = exporter.getWidth();
+            this.levels = exporter.getLevels();
+            this.isExportJson = exporter.isExportJson();
+            this.path = exporter.getDirectory();
         }
     }
 }

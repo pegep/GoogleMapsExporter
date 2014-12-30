@@ -44,7 +44,7 @@ public class TileExporterPanel extends javax.swing.JPanel {
         heightTextField.setText(Integer.toString(exporter.getHeight()));
         widthTextField.setText(Integer.toString(exporter.getWidth()));
         levelsTextField.setText(Integer.toString(exporter.getLevels()));
-        path = new File(NbPreferences.forModule(TileExporterPanel.class).get(LAST_PATH, System.getProperty("user.home")+"/tiles"));
+        path = new File(NbPreferences.forModule(TileExporterPanel.class).get(LAST_PATH, System.getProperty("user.home") + File.separator + "tiles"));
         directoryTextField.setText(path.getAbsolutePath());
         exportJsonCheckBox.setSelected(exporter.isExportJson());
     }
@@ -52,11 +52,11 @@ public class TileExporterPanel extends javax.swing.JPanel {
     public void unsetup(boolean update) {
         if (update) {
             try {
-                NbPreferences.forModule(TileExporterPanel.class).put(LAST_PATH, path.getAbsolutePath());
+                NbPreferences.forModule(TileExporterPanel.class).put(LAST_PATH, directoryTextField.getText());
                 exporter.setWidth(Integer.parseInt(widthTextField.getText()));
                 exporter.setHeight(Integer.parseInt(heightTextField.getText()));
                 exporter.setLevels(Integer.parseInt(levelsTextField.getText()));
-                exporter.setDirectory(path.getAbsolutePath());
+                exporter.setDirectory(directoryTextField.getText());
                 exporter.setExportJson(exportJsonCheckBox.isSelected());
             } catch (Exception ex) {
             }
