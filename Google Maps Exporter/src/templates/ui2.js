@@ -37,7 +37,7 @@ setTimeout(function() {
               }
       }).order('size desc').limit(visibleNodesLimit).get();
 
-      updateTableData(visibleNodes, sortByColumn);
+      updateTableData(visibleNodes);
     });
 }, 500);
 
@@ -51,8 +51,8 @@ $(document).ready(function() {
         if (newSortByColumn == sortByColumn) {
           descending = !descending;
         }
-        updateTableData(visibleNodes, newSortByColumn);
         sortByColumn = newSortByColumn;
+        updateTableData(visibleNodes);
   });
 });
 
@@ -84,11 +84,11 @@ function sortData(data, sortBy) {
   return data;
 }
 
-function updateTableData(data, sortBy) {
+function updateTableData(data) {
   $('.info table thead').empty();
   $('.info table tbody').empty();
 
-  data = sortData(data, sortBy);
+  data = sortData(data, sortByColumn);
 
   var tr = $('<tr></tr>').appendTo('.info table thead');
   distinctColumns.forEach(function(key) {
