@@ -65,7 +65,6 @@ function sortData(data, sortBy) {
 
   definedItems.sort(function(a, b) {
     if (!isNaN(parseInt(a[sortBy])) && !isNaN(parseInt(a[sortBy]))) {
-      console.log(descending);
       return descending
         ? parseInt(a[sortBy]) - parseInt(b[sortBy])
         : parseInt(b[sortBy]) - parseInt(a[sortBy])
