@@ -97,38 +97,56 @@ public class TileExporterUI implements ExporterClassUI {
 
                         // Save template files
                         InputStream sourceHtml = null;
+                        InputStream sourceHtml2 = null;
                         InputStream sourceMapJs = null;
                         InputStream sourceTaffyJs = null;
                         InputStream sourceUiJs = null;
+                        InputStream sourceUi2Js = null;
                         InputStream sourceMarkerPng = null;
-                        OutputStream destinationHtml = null;                        
+                        InputStream sourceDotObjectJs = null;
+                        OutputStream destinationHtml = null;
+                        OutputStream destinationHtml2 = null;
                         OutputStream destinationMapJs = null;
                         OutputStream destinationTaffyJs = null;
                         OutputStream destinationUiJs = null;
+                        OutputStream destinationUi2Js = null;
                         OutputStream destinationMarkerPng = null;
+                        OutputStream destinationDotObjectJs = null;
                         try {
                             File outFileHtml = new File(filePath + File.separator + "index.html");
+                            File outFileHtml2 = new File(filePath + File.separator + "index2.html");
                             File outFileMapJs = new File(filePath + File.separator + "map.js");
                             File outFileTaffyJs = new File(filePath + File.separator + "taffy.js");
                             File outFileUiJs = new File(filePath + File.separator + "ui.js");
+                            File outFileUi2Js = new File(filePath + File.separator + "ui2.js");
                             File outFileMarkerPng = new File(filePath + File.separator + "marker.png");
+                            File outFileDotObjectJs = new File(filePath + File.separator + "dot-object.js");
 
                             sourceHtml = getClass().getResourceAsStream("/templates/index.html");
+                            sourceHtml2 = getClass().getResourceAsStream("/templates/index2.html");
                             sourceMapJs = getClass().getResourceAsStream("/templates/map.js");
                             sourceTaffyJs = getClass().getResourceAsStream("/templates/taffy.js");
                             sourceUiJs = getClass().getResourceAsStream("/templates/ui.js");
+                            sourceUi2Js = getClass().getResourceAsStream("/templates/ui2.js");
                             sourceMarkerPng = getClass().getResourceAsStream("/templates/marker.png");
+                            sourceDotObjectJs = getClass().getResourceAsStream("/templates/dot-object.js");
                             destinationHtml = new FileOutputStream(outFileHtml);
+                            destinationHtml2 = new FileOutputStream(outFileHtml2);
                             destinationMapJs = new FileOutputStream(outFileMapJs);
                             if (exporter.isExportJson()) {
                                 destinationTaffyJs = new FileOutputStream(outFileTaffyJs);
                                 destinationUiJs = new FileOutputStream(outFileUiJs);
+                                destinationUi2Js = new FileOutputStream(outFileUi2Js);
                                 destinationMarkerPng = new FileOutputStream(outFileMarkerPng);
+                                destinationDotObjectJs = new FileOutputStream(outFileDotObjectJs);
                             }
                             byte[] buf = new byte[1024];
                             int bytesRead;
                             while ((bytesRead = sourceHtml.read(buf)) > 0) {
                                 destinationHtml.write(buf, 0, bytesRead);
+                            }
+                            while ((bytesRead = sourceHtml2.read(buf)) > 0) {
+                                destinationHtml2.write(buf, 0, bytesRead);
                             }
                             while ((bytesRead = sourceMapJs.read(buf)) > 0) {
                                 destinationMapJs.write(buf, 0, bytesRead);
@@ -137,22 +155,37 @@ public class TileExporterUI implements ExporterClassUI {
                                 while ((bytesRead = sourceUiJs.read(buf)) > 0) {
                                     destinationUiJs.write(buf, 0, bytesRead);
                                 }
+                                while ((bytesRead = sourceUi2Js.read(buf)) > 0) {
+                                    destinationUi2Js.write(buf, 0, bytesRead);
+                                }
                                 while ((bytesRead = sourceTaffyJs.read(buf)) > 0) {
                                     destinationTaffyJs.write(buf, 0, bytesRead);
                                 }
                                 while ((bytesRead = sourceMarkerPng.read(buf)) > 0) {
                                     destinationMarkerPng.write(buf, 0, bytesRead);
                                 }
+                                while ((bytesRead = sourceDotObjectJs.read(buf)) > 0) {
+                                    destinationDotObjectJs.write(buf, 0, bytesRead);
+                                }
                             }
                         } finally {
                             if (sourceHtml != null) {
                                 sourceHtml.close();
                             }
+                            if (sourceHtml2 != null) {
+                                sourceHtml.close();
+                            }
                             if (destinationHtml != null) {
+                                destinationHtml.close();
+                            }
+                            if (destinationHtml2 != null) {
                                 destinationHtml.close();
                             }
                             if (sourceMapJs != null) {
                                 sourceMapJs.close();
+                            }
+                            if (sourceDotObjectJs != null) {
+                                sourceDotObjectJs.close();
                             }
                             if (destinationMapJs != null) {
                                 destinationMapJs.close();
@@ -166,6 +199,9 @@ public class TileExporterUI implements ExporterClassUI {
                             if (sourceUiJs != null) {
                                 destinationUiJs.close();
                             }
+                            if (sourceUi2Js != null) {
+                                destinationUiJs.close();
+                            }
                             if (destinationUiJs != null) {
                                 destinationUiJs.close();
                             }
@@ -174,6 +210,9 @@ public class TileExporterUI implements ExporterClassUI {
                             }
                             if (destinationMarkerPng != null) {
                                 destinationMarkerPng.close();
+                            }
+                            if (destinationDotObjectJs != null) {
+                                destinationDotObjectJs.close();
                             }
                         }
 
