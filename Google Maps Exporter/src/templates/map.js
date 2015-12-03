@@ -2,7 +2,7 @@
  * This file is part of Google Maps Exporter plugin for Gephi
  *
  * Author: Pekka Maksimainen, (c) 2013-2014
- * 
+ *
  * Contact: Gephi forums or http://graphmap.net
  */
 
@@ -13,11 +13,11 @@ $(document).ready(function() {
 });
 
 var Mapper = (function() {
-    var map, 
+    var map,
         coordinateMapType,
         markers = [],
         activeNodes = [],
-        flipV, 
+        flipV,
         verbose = false,
         initialized = false;
 
@@ -127,7 +127,6 @@ var Mapper = (function() {
         var origin = me.pixelOrigin_;
         var lng = (point.x - origin.x) / me.pixelsPerLonDegree_;
         var latRadians = (point.y - origin.y) / -me.pixelsPerLonRadian_;
-
         var lat = radiansToDegrees(2 * Math.atan(Math.exp(latRadians)) - Math.PI / 2);
 
         var x = point.x / 256 * 360 - 180;
@@ -190,7 +189,8 @@ var Mapper = (function() {
             map = new google.maps.Map(document.getElementById(map_id), {
                 zoom: 10,
                 maxZoom: options.maxZoom || 15,
-                center: new google.maps.LatLng(170 / Math.pow(2, 8) / 2, 360 / Math.pow(2, 8) / 2),
+                //center: new google.maps.LatLng(170 / Math.pow(2, 8) / 2, 360 / Math.pow(2, 8) / 2),
+								center: new google.maps.LatLng(-360 / Math.pow(2, 8) / 2, 180 / Math.pow(2, 7) / 2),
                 mapTypeId: google.maps.MapTypeId.HYBRID,
                 mapTypeIds: ['coordinate'],
                 streetViewControl: false,
@@ -204,6 +204,16 @@ var Mapper = (function() {
                     position: google.maps.ControlPosition.LEFT_CENTER
                 }
             });
+
+						google.maps.event.addListenerOnce(map,"projection_changed", function() {
+							var projection = map.getProjection();
+							projection.fromPointToLatLng = function(point) {
+								var lat = -(point.y - Math.pow(2, 7)) * 360 / Math.pow(2, 7) / 2;
+								var lng = (point.x - Math.pow(2, 7)) * 360 / Math.pow(2, 7) / 2;
+
+								return new google.maps.LatLng(lat, lng);
+							}
+						});
 
             if (verbose) {
                 google.maps.event.addListener(map, 'mousemove', function(event) {
@@ -229,8 +239,9 @@ var Mapper = (function() {
             coordinateMapType.boundaries.miny = miny;
             coordinateMapType.boundaries.maxx = maxx;
             coordinateMapType.boundaries.maxy = maxy;
-            var projection = new DirectProjection();
-            coordinateMapType.projection = projection;
+
+            //var projection = new DirectProjection();
+            //coordinateMapType.projection = projection;
             map.mapTypes.set('coordinate', coordinateMapType);
             map.setMapTypeId('coordinate');
             initialized = true;
@@ -245,48 +256,45 @@ var Mapper = (function() {
             return grpClick;
         },
         getBounds: function() {
-            var bounds = map.getBounds();
-            var center = map.getCenter();
-            var ne = bounds.getNorthEast();
-            var sw = bounds.getSouthWest();
-            var span = bounds.toSpan();
-            var zoom = map.getZoom();
+					var bounds = map.getBounds();
+					var center = map.getCenter();
+					var ne = bounds.getNorthEast();
+					var sw = bounds.getSouthWest();
+					var span = bounds.toSpan();
+					var zoom = map.getZoom();
 
-            // note: coordinates are mirrored so...
-            var swCoord = latLng2Coord(ne.lat(), ne.lng());
-            var neCoord = latLng2Coord(sw.lat(), sw.lng());
+					var my_minx = sw.lng();
+					var my_maxx = ne.lng();
+					var my_miny = sw.lat();
+					var my_maxy = ne.lat();
 
-            var my_miny = lat2y(sw.lat());
-            var my_minx = lng2x(sw.lng());
-            var my_maxy = lat2y(ne.lat());
-            var my_maxx = lng2x(ne.lng());
+					var tileWidthDegrees = 360/Math.pow(2, 8);
+					var tileHeightDegrees = 170/Math.pow(2, 8);
+					my_minx = lng2x(-180 + sw.lng() / tileWidthDegrees * 360);
+					my_maxx = lng2x(-180 + ne.lng() / tileWidthDegrees * 360);
 
-            var tileWidthDegrees = 360 / Math.pow(2, 8);
-            var tileHeightDegrees = 170 / Math.pow(2, 8);
-            
-            my_miny = lat2y(-85 + sw.lat() / tileHeightDegrees * 170);
-            my_minx = lng2x(-180 + sw.lng() / tileWidthDegrees * 360);
-            my_maxy = lat2y(-85 + ne.lat() / tileHeightDegrees * 170);
-            my_maxx = lng2x(-180 + ne.lng() / tileWidthDegrees * 360);
+					var top = ne.lat() + 360/Math.pow(2,8);
+					var topRelative = (ne.lat() + 360/Math.pow(2,8)) / (360/Math.pow(2,8));
+					var boundsHeight = Math.abs((coordinateMapType.boundaries.miny - coordinateMapType.boundaries.maxy));
+					my_maxy = topRelative * boundsHeight + coordinateMapType.boundaries.miny;
 
-            if (flipV) {
-                var tmp = my_miny;
-                my_miny = -my_maxy;
-                my_maxy = -tmp;
-            }
-            
-            return {
-                minx: my_minx,
-                miny: my_miny,
-                maxx: my_maxx,
-                maxy: my_maxy
-            };
+					var bottom = sw.lat() + 360/Math.pow(2,8);
+					var bottomRelative = (sw.lat() + 360/Math.pow(2,8)) / (360/Math.pow(2,8));
+					var boundsHeight = Math.abs((coordinateMapType.boundaries.miny - coordinateMapType.boundaries.maxy));
+					my_miny = bottomRelative * boundsHeight + coordinateMapType.boundaries.miny;
+
+					if (flipV) {
+							var tmp = my_miny;
+							my_miny = -my_maxy;
+							my_maxy = -tmp;
+					}
+					return { minx: my_minx, miny: my_miny, maxx: my_maxx, maxy: my_maxy };
         },
         getCenter: function() {
             var bounds = this.getBounds();
             var centerx = (bounds.maxx + bounds.minx) / 2;
             var centery = (bounds.maxy + bounds.miny) / 2;
-            
+
             return [centerx, centery];
         },
         coord2LatLng: function(coordx, coordy) {
@@ -300,6 +308,7 @@ var Mapper = (function() {
             }
 
             // Canvas size
+
             var dimx = (Math.abs(minx - maxx));
             var dimy = (Math.abs(miny - maxy));
 
@@ -307,23 +316,16 @@ var Mapper = (function() {
             var x = Math.floor(coordx - minx);
             var y = Math.floor(coordy - miny);
 
-            // Flip overlay data on y-axis if necessary, often it is
-            if (flipV) {
-                y = Math.floor(maxy - coordy); // offset from top bound
-                y -= (miny + maxy); // offset from abscissa
-            }
+						y = Math.floor(maxy - coordy); // offset from top bound
+						y -= (miny + maxy); // offset from abscissa
 
-            // Position translated to coordinate system
-            cx = x / dimx * 360;
-            cy = y / dimy * 170;
+						var lat = y / dimy;
+						var lng = x / dimx;
 
-            cx /= 256;
-            cy /= 256;
+						lng = 360 / Math.pow(2, 8) * lng;
+						lat = 360 / Math.pow(2, 8) * lat;
 
-            lng = cx;
-            lat = cy;
-
-            return [lat, lng];
+            return [-lat, lng];
         },
         insertNodes: function(data) {
             var zoomLevel = 15;
@@ -343,7 +345,6 @@ var Mapper = (function() {
                 var lat = parseFloat(latLng[0]);
                 var lng = parseFloat(latLng[1]);
                 var loc = new google.maps.LatLng(lat, lng);
-    //          loc = locConv(loc);
                 var marker = activeNodes[node.id] ? pointerMarker : basicMarker;
                 if (markerIds.indexOf(node.id) < 0) {
 

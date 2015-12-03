@@ -22,7 +22,6 @@ var descending = false;
 
 /* Initialize Mapper */
 setTimeout(function() {
-    Mapper.flipV(true);
     Mapper.setIdleFunc(function() {
       var bounds = Mapper.getBounds();
 
@@ -38,6 +37,7 @@ setTimeout(function() {
       }).order('size desc').limit(visibleNodesLimit).get();
 
       updateTableData(visibleNodes);
+      updateCircles(visibleNodes);
     });
 }, 500);
 
@@ -57,6 +57,56 @@ $(document).ready(function() {
 });
 
 /* Helper functions */
+zFactor = 152000;
+var circleCache = {};
+
+function scrollToNodeInTable(node) {
+  var id = node.id || node;
+  $('.info table tr').removeClass('highlight-border');
+  $('.info').scrollTop(0);
+  var row = $('.info table').first().find('tr[data-id="' + id + '"]').first();
+  row.addClass('highlight-border');
+  $('.info').scrollTop(row.position().top);
+}
+
+function removeCircles(data) {
+  Object.keys(data).forEach(function(key) {
+    data[key].setMap(null);
+    delete data[key];
+  });
+}
+
+function updateCircles(data) {
+  /* Removing node circles from map may help with performance issues */
+  if (Object.keys(circleCache).length > 500) {
+    removeCircles(circleCache);
+  }
+
+  data.forEach(function(node) {
+    var nodeCircleExists = !!circleCache[node.id];
+
+    if (!nodeCircleExists) {
+      var loc = Mapper.coord2LatLng(node.x, node.y);
+      var nodeSize = node.size / Math.abs(maxx - minx) * zFactor;
+      nodeCircle = new google.maps.Circle({
+        strokeWeight: 1,
+        strokeColor: '#FFFFFF',
+        fillOpacity: 0,
+        map: Mapper.getMap(),
+        center: new google.maps.LatLng(loc[0], loc[1]),
+        radius: nodeSize,
+        clickable: true,
+        id: node.id
+      });
+      google.maps.event.addListener(nodeCircle, 'mouseover', function() {
+        console.log(node);
+        scrollToNodeInTable(node);
+      });
+      circleCache[node.id] = nodeCircle;
+    };
+  });
+}
+
 function sortData(data, sortBy) {
   sortBy = sortBy || sortByColumn;
 
