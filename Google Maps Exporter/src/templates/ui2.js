@@ -25,14 +25,20 @@ setTimeout(function() {
     Mapper.setIdleFunc(function() {
       var bounds = Mapper.getBounds();
 
+      // flip coordinates vertically or something... offsetting at least
+      // this fixes the logically working getBounds() to pass correct
+      // kind of values for spatial database query
+      var bmaxy = bounds.maxy - maxy - miny;
+      var bminy = bounds.miny - maxy - miny;
+
       visibleNodes = db().filter({
           x: {
               gte: bounds.minx,
               lte: bounds.maxx
               },
           y: {
-              gte: bounds.miny,
-              lte: bounds.maxy
+              gte: bminy,
+              lte: bmaxy
               }
       }).order('size desc').limit(visibleNodesLimit).get();
 
@@ -43,6 +49,7 @@ setTimeout(function() {
 
 /* Initial page load functionality */
 $(document).ready(function() {
+  Mapper.flipV(false);
   distinctColumns = Object.keys(DotObject.dot(graph.nodes[0]));
   updateTableData(graph.nodes);
 
