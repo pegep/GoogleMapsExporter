@@ -53,6 +53,7 @@ $(document).ready(function() {
   distinctColumns = Object.keys(DotObject.dot(graph.nodes[0]));
   updateTableData(graph.nodes);
 
+  /* Click listener on the table header, we'll sort the table by clicked column */
   $('.info table').on('click', 'th', function(event) {
         var newSortByColumn = $(event.target).text();
         if (newSortByColumn == sortByColumn) {
@@ -61,12 +62,58 @@ $(document).ready(function() {
         sortByColumn = newSortByColumn;
         updateTableData(visibleNodes);
   });
+
+  /* When hovering on table row highlight the selected node on the map */
+  $('.info table').on('mouseover', 'tbody tr', function() {
+    var node = db({id: $(this).data('id').toString()}).first();
+    highlightNode(node);
+  });
+
+  /* Remove highlighting when mouse leaves the row */
+  $('.info table').on('mouseout', 'tbody tr', function() {
+    var node = db({id: $(this).data('id').toString()}).first();
+    unhighlightNode(node);
+  });
 });
 
 /* Helper functions */
-zFactor = 152000;
+zFactor = 152000; // Mysterious number that makes circles the right size
 var circleCache = {};
+var highlightCircleCache = {};
 
+/* Add highlighted circle on the map */
+function highlightNode(node) {
+  var loc = Mapper.coord2LatLng(node.x + 1, node.y - 1);
+  var nodeSize = node.size / Math.abs(maxx - minx) * zFactor;
+  var nodeCircle = new google.maps.Circle({
+    strokeWeight: 3,
+    strokeColor: '#FF0000',
+    map: Mapper.getMap(),
+    center: new google.maps.LatLng(loc[0], loc[1]),
+    radius: nodeSize,
+    id: node.id
+  });
+  highlightCircleCache[node.id] = nodeCircle;
+}
+
+/* Remove highlighting from a circle on the map */
+function unhighlightNode(node) {
+  var circle = highlightCircleCache[node.id];
+  circle.setMap(null);
+  delete highlightCircleCache[node.id];
+}
+
+/* Remove highlight from all nodes on the map */
+function unhighlightAll() {
+  Object.keys(highlightCircleCache).forEach(function(key) {
+    if (highlightCircleCache[key]) {
+      highlightCircleCache[key].setMap(null);
+      delete highlightCircleCache[key];
+    }
+  });
+}
+
+/* Scroll table to show hovered node on the map */
 function scrollToNodeInTable(node) {
   var id = node.id || node;
   $('.info table tr').removeClass('highlight-border');
@@ -76,6 +123,7 @@ function scrollToNodeInTable(node) {
   $('.info').scrollTop(row.position().top);
 }
 
+/* Removes circles from the map - useful to reset if lots of circles are drawn */
 function removeCircles(data) {
   Object.keys(data).forEach(function(key) {
     data[key].setMap(null);
@@ -83,15 +131,18 @@ function removeCircles(data) {
   });
 }
 
+/* Add circles on the map which can be hovered with a mouse cursor */
 function updateCircles(data) {
   /* Removing node circles from map may help with performance issues */
   if (Object.keys(circleCache).length > 500) {
     removeCircles(circleCache);
   }
 
+  /* Go through all nodes */
   data.forEach(function(node) {
     var nodeCircleExists = !!circleCache[node.id];
 
+    /* Skip adding nodes that are already on the map */
     if (!nodeCircleExists) {
       var loc = Mapper.coord2LatLng(node.x, node.y);
       var nodeSize = node.size / Math.abs(maxx - minx) * zFactor;
@@ -105,15 +156,19 @@ function updateCircles(data) {
         clickable: true,
         id: node.id
       });
+
+      /* Highlight node in table view when hovering over a node on a map */
       google.maps.event.addListener(nodeCircle, 'mouseover', function() {
-        console.log(node);
         scrollToNodeInTable(node);
       });
+
+      /* Store circles in a buffer so we can access the circle later */
       circleCache[node.id] = nodeCircle;
     };
   });
 }
 
+/* Sort table data by given column - don't add the data to table though */
 function sortData(data, sortBy) {
   sortBy = sortBy || sortByColumn;
 
@@ -140,39 +195,56 @@ function sortData(data, sortBy) {
   return data;
 }
 
+/* Add given data to the table below the map */
 function updateTableData(data) {
   $('.info table thead').empty();
   $('.info table tbody').empty();
 
+  /* Sort data by selected column */
   data = sortData(data, sortByColumn);
 
+  /* Construct title row which shows column names */
   var tr = $('<tr></tr>').appendTo('.info table thead');
   distinctColumns.forEach(function(key) {
+    /* Don't list columns that are not interesting, we probably want to exclude
+     * other columns such as x, y, color and size too. These columns are shown
+     * to make this example more interesting looking.
+     */
     if (excludeKeys.indexOf(key) > -1) {
       return true;
     }
 
+    /* Add the column, 'key' is the name of the column */
     tr.append('<th title="' + key + '">' + key + '</th>');
   });
 
+  /* The HTML here is empty - it could have some pre-existing rows */
   var html = $('.info table tbody').html();
+
+  /* Construct data rows for the table */
   data.forEach(function(item) {
     var htmlRow = '<tr data-id="' + item.id + '">';
 
+    /* Go through columns that we want to add */
     distinctColumns.forEach(function(key) {
+      /* Skip columns that we still might not want to show */
       if (excludeKeys.indexOf(key) > -1) {
         return true;
       }
 
+      /* Using dot.notation to pick keys from the data */
       var value = DotObject.pick(key, item) || '';
       htmlRow += '<td '
         + 'title="' + value + '" '
         + 'style="color: ' + item.color + '"'
         + '>' + value + '</td>';
     });
+
+    /* Each individual row is appended to the resulting HTML string */
     htmlRow += '</tr>';
     html += htmlRow;
   });
 
+  /* Actually add the data rows on the table */
   $('.info table tbody')[0].innerHTML = html;
 };
