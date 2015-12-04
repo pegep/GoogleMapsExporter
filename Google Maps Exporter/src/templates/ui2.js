@@ -6,7 +6,7 @@ db.sort('size desc');
 var visibleNodes = [];
 
 /* Limit how many nodes to show on node table */
-var visibleNodesLimit = 100;
+var visibleNodesLimit = 500;
 
 /* Columns to show in table listing */
 var distinctColumns; // automatically detected from grpah JSON data
