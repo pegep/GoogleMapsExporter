@@ -77,7 +77,7 @@ $(document).ready(function() {
 });
 
 /* Helper functions */
-zFactor = 152000; // Mysterious number that makes circles the right size
+var zFactor = 152000; // Mysterious number that makes circles the right size
 var circleCache = {};
 var highlightCircleCache = {};
 
