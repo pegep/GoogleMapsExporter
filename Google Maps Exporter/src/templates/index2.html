@@ -30,6 +30,15 @@
     overflow: auto;
     position: relative;
   }
+  .options {
+    color: white;
+    position: absolute;
+    left: 10px;
+    top: 10px;
+  }
+  .options label {
+    vertical-align: middle;
+  }
   .highlight-border {
     border-top: 2px solid #DA9999;
     border-bottom: 2px solid #DA9999;
@@ -55,6 +64,10 @@
 <body>
   <div id="map_canvas">
     <p>Loading...</p>
+  </div>
+  <div class="options">
+    <input name="hover-focus" type="checkbox" id="hover-focus"></input>
+    <label for="hover-focus">Hovering selects node in table</label>
   </div>
   <div class="info">
     <table class="table table-condensed table-hover">

@@ -18,7 +18,7 @@ var excludeKeys = ['___id', '___s']; // Taffy variables?
 var sortByColumn = 'size';
 
 /* Direction of sort */
-var descending = false;
+var descending = true;
 
 /* Initialize Mapper */
 setTimeout(function() {
@@ -115,6 +115,10 @@ function unhighlightAll() {
 
 /* Scroll table to show hovered node on the map */
 function scrollToNodeInTable(node) {
+  /* Don't scroll table if checkbox is not checked */
+  if (!$('#hover-focus').is(':checked')) {
+    return;
+  }
   var id = node.id || node;
   $('.info table tr').removeClass('highlight-border');
   $('.info').scrollTop(0);
