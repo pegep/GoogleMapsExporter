@@ -138,7 +138,7 @@ function removeCircles(data) {
 /* Add circles on the map which can be hovered with a mouse cursor */
 function updateCircles(data) {
   /* Removing node circles from map may help with performance issues */
-  if (Object.keys(circleCache).length > 500) {
+  if (Object.keys(circleCache).length > 5000) {
     removeCircles(circleCache);
   }
 
